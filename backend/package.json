@@ -1,0 +1,13 @@
+{
+  "name": "roomly-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST de Roomly para alojamientos y búsqueda de roomies",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  }
+}

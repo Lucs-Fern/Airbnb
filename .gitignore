@@ -1,0 +1,73 @@
+# ==============================
+# Roomly - archivos ignorados por Git
+# ==============================
+
+# Secrets / environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules/
+
+# Flutter / Dart generated files
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android local configuration and signing keys
+**/android/local.properties
+**/android/key.properties
+**/android/.gradle/
+*.jks
+*.keystore
+
+# Android build output
+**/android/app/build/
+**/android/build/
+
+# iOS generated / local files (kept in case the project expands later)
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+
+# IDE local settings
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local databases, backups and exports
+postgres-data/
+*.dump
+*.bak
+*.backup
+
+# Uploaded files: keep the folder placeholder, never uploaded user files
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
