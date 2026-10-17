@@ -22,4 +22,18 @@ class Reservation {
     required this.guests,
     this.status = ReservationStatus.pending,
   });
+
+  Reservation copyWith({
+    ReservationStatus? status,
+  }) {
+    return Reservation(
+      id: id,
+      propertyId: propertyId,
+      propertyTitle: propertyTitle,
+      startDate: startDate,
+      endDate: endDate,
+      guests: guests,
+      status: status ?? this.status,
+    );
+  }
 }

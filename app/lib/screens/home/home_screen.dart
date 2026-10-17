@@ -1,10 +1,11 @@
-
+import '../reservations/host_requests_screen.dart';//temporal
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/property.dart';
 
 import '../properties/property_detail_screen.dart';
+import '../reservations/my_reservations_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -539,45 +540,89 @@ final List<Property> _properties = [
           'Datos personales',
           'Nombre, teléfono, foto y descripción.',
         ),
+
+        _buildComingSoonCard(
+  Icons.calendar_month_outlined,
+  'Mis reservas',
+  'Consulta tus solicitudes de hospedaje y su estado.',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            const MyReservationsScreen(),
+      ),
+    );
+  },
+),
+
         _buildComingSoonCard(
           Icons.settings_outlined,
           'Preferencias',
           'Configura tus hábitos y estilo de convivencia.',
         ),
+        _buildComingSoonCard(
+  Icons.assignment_outlined,
+  'Solicitudes recibidas',
+  'Gestiona las solicitudes de tus alojamientos.',
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            const HostRequestsScreen(),
+      ),
+    );
+  },
+),
       ],
     );
   }
 
   Widget _buildComingSoonCard(
-    IconData icon,
-    String title,
-    String description,
-  ) {
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppTheme.border),
+  IconData icon,
+  String title,
+  String description, {
+  VoidCallback? onTap,
+}) {
+  return Card(
+    color: Colors.white,
+    elevation: 0,
+    margin: const EdgeInsets.only(bottom: 12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(
+        color: AppTheme.border,
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(14),
-        leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryLight,
-          child: Icon(icon, color: AppTheme.primary),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 5),
-          child: Text(description),
+    ),
+    child: ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.all(14),
+      leading: CircleAvatar(
+        backgroundColor: AppTheme.primaryLight,
+        child: Icon(
+          icon,
+          color: AppTheme.primary,
         ),
       ),
-    );
-  }
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 5),
+        child: Text(description),
+      ),
+      trailing: onTap != null
+          ? const Icon(
+              Icons.chevron_right_rounded,
+            )
+          : null,
+    ),
+  );
+}
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

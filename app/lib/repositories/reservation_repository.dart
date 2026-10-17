@@ -15,5 +15,22 @@ class ReservationRepository {
     _reservations.add(reservation);
   }
 
+  void updateReservationStatus(
+    int reservationId,
+    ReservationStatus newStatus,
+  ) {
+    final index = _reservations.indexWhere(
+      (reservation) => reservation.id == reservationId,
+    );
+
+    if (index == -1) {
+      return;
+    }
+
+    _reservations[index] = _reservations[index].copyWith(
+      status: newStatus,
+    );
+  }
+
   bool get hasReservations => _reservations.isNotEmpty;
 }
