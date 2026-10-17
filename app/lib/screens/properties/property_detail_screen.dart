@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/property.dart';
+import '../reservations/reservation_request_screen.dart';
 
 class PropertyDetailScreen extends StatelessWidget {
   final Property property;
@@ -224,12 +225,13 @@ class PropertyDetailScreen extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: property.available
                       ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'La solicitud de reserva será '
-                                'la siguiente función a desarrollar.',
-                              ),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                              ReservationRequestScreen(
+                                property: property,
+                            ),
                             ),
                           );
                         }
