@@ -17,32 +17,77 @@ class _HostRequestsScreenState
   List<Reservation> get _reservations =>
       ReservationRepository.instance.reservations;
 
-  void _updateStatus(
-    Reservation reservation,
-    ReservationStatus newStatus,
-  ) {
-    ReservationRepository.instance.updateReservationStatus(
-      reservation.id,
-      newStatus,
-    );
+  
+Future<void> _updateStatus(
+  Reservation reservation,
+  ReservationStatus newStatus,
+) async {
+  final isAccept =
+      newStatus == ReservationStatus.accepted;
 
-    setState(() {});
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: Text(
+          isAccept
+              ? 'Aceptar solicitud'
+              : 'Rechazar solicitud',
+        ),
+        content: Text(
+          '¿Estás seguro de que deseas '
+          '${isAccept ? "aceptar" : "rechazar"} '
+          'la solicitud para '
+          '${reservation.propertyTitle}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, false);
+            },
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, true);
+            },
+            child: Text(
+              isAccept ? 'Aceptar' : 'Rechazar',
+            ),
+          ),
+        ],
+      );
+    },
+  );
 
-    final message = switch (newStatus) {
-      ReservationStatus.accepted =>
-        'Solicitud aceptada con éxito.',
-      ReservationStatus.rejected =>
-        'Solicitud rechazada.',
-      ReservationStatus.pending =>
-        'Solicitud actualizada.',
-    };
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
-    );
+  if (!mounted || confirmed != true) {
+    return;
   }
+
+  final updated =
+      ReservationRepository.instance
+          .updateReservationStatus(
+    reservation.id,
+    newStatus,
+  );
+
+  if (updated) {
+    setState(() {});
+  }
+
+  final message = updated
+      ? (isAccept
+          ? 'Solicitud aceptada con éxito.'
+          : 'Solicitud rechazada con éxito.')
+      : 'No fue posible actualizar la solicitud.';
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {

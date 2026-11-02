@@ -36,4 +36,6 @@ class Reservation {
       status: status ?? this.status,
     );
   }
+
+  
 }
