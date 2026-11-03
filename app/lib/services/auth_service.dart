@@ -6,6 +6,7 @@ class AuthService {
   static const String baseUrl =
       'http://127.0.0.1:3000/api/auth';
 
+  // INICIO DE SESIÓN
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -21,8 +22,8 @@ class AuthService {
       }),
     ).timeout(const Duration(seconds: 10));
 
-    final data = jsonDecode(response.body)
-        as Map<String, dynamic>;
+    final data =
+        jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode == 200 &&
         data['success'] == true) {
@@ -30,8 +31,44 @@ class AuthService {
     }
 
     throw Exception(
-      data['message'] ?? 'No fue posible iniciar sesión.',
+      data['message']?.toString() ??
+          'No fue posible iniciar sesión.',
+    );
+  }
+
+  // REGISTRO DE USUARIOS
+  Future<Map<String, dynamic>> register({
+    required String fullName,
+    required String email,
+    required String password,
+    required String phone,
+    required String role,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'full_name': fullName.trim(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+        'phone': phone.trim(),
+        'role': role,
+      }),
+    ).timeout(const Duration(seconds: 10));
+
+    final data =
+        jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 201 &&
+        data['success'] == true) {
+      return data;
+    }
+
+    throw Exception(
+      data['message']?.toString() ??
+          'No fue posible registrar el usuario.',
     );
   }
 }
- 
