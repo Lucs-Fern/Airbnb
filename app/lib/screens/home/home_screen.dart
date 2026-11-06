@@ -7,6 +7,11 @@ import '../../models/property.dart';
 import '../properties/property_detail_screen.dart';
 import '../reservations/my_reservations_screen.dart';
 
+import '../../services/session_service.dart';
+import '../../services/property_service.dart';
+import '../properties/create_property_screen.dart';
+import '../properties/my_properties_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,61 +26,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final Set<int> _favoriteIds = {};
 
-final List<Property> _properties = [
-  const Property(
-    id: 1,
-    title: 'Apartamento acogedor',
-    location: 'San Fernando, Cali',
-    price: 850000,
-    type: 'Apartamento',
-    description:
-        'Apartamento amoblado, con buena iluminación y cerca de transporte público.',
-    capacity: 2,
-    duration: 'Mediano plazo',
-    amenities: [
-      'WiFi',
-      'Cocina',
-      'Lavadora',
-      'Aire acondicionado',
-    ],
-    available: true,
-  ),
-  const Property(
-    id: 2,
-    title: 'Habitación privada',
-    location: 'San Antonio, Cali',
-    price: 550000,
-    type: 'Habitación',
-    description:
-        'Habitación privada dentro de una vivienda compartida, ideal para estudiantes.',
-    capacity: 1,
-    duration: 'Largo plazo',
-    amenities: [
-      'WiFi',
-      'Cocina compartida',
-      'Servicios incluidos',
-    ],
-    available: true,
-  ),
-  const Property(
-    id: 3,
-    title: 'Estudio para una persona',
-    location: 'El Ingenio, Cali',
-    price: 1000000,
-    type: 'Apartamento',
-    description:
-        'Espacio tranquilo e independiente, ideal para estudiar o trabajar.',
-    capacity: 1,
-    duration: 'Corto y mediano plazo',
-    amenities: [
-      'WiFi',
-      'Cocina',
-      'Baño privado',
-      'Aire acondicionado',
-    ],
-    available: true,
-  ),
-];
+  final PropertyService _propertyService = PropertyService();
+  List<Property> _properties = [];
+  Map<int, String> _propertyImageUrls = {};
+  Map<int, String> _propertyHouseRules = {};
+  bool _loadingProperties = true;
+  String? _propertiesError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProperties();
+  }
+
+  Future<void> _loadProperties() async {
+    setState(() {
+      _loadingProperties = true;
+      _propertiesError = null;
+    });
+
+    try {
+      final rows = await _propertyService.getProperties();
+      final loadedProperties = <Property>[];
+      final loadedImageUrls = <int, String>{};
+      final loadedHouseRules = <int, String>{};
+
+      for (final row in rows) {
+        final id = int.parse(row['id'].toString());
+        final capacity = int.tryParse(row['capacity'].toString()) ?? 1;
+        final price = double.tryParse(row['price_monthly'].toString()) ?? 0.0;
+        final rawAmenities = row['amenities'];
+        final amenities = rawAmenities is List
+            ? rawAmenities.map((item) => item.toString()).toList()
+            : <String>[];
+
+        loadedProperties.add(
+          Property(
+            id: id,
+            title: row['title']?.toString() ?? '',
+            location: row['location']?.toString() ?? '',
+            price: price,
+            type: row['type']?.toString() ?? '',
+            description: row['description']?.toString() ?? '',
+            capacity: capacity,
+            duration: row['duration']?.toString() ?? '',
+            amenities: amenities,
+            available: row['available'] == true,
+          ),
+        );
+
+        final imagePath = row['image_path']?.toString() ?? '';
+        if (imagePath.isNotEmpty) {
+          loadedImageUrls[id] = _propertyService.getImageUrl(imagePath);
+        }
+        final rules = row['house_rules']?.toString() ?? '';
+        if (rules.trim().isNotEmpty) {
+          loadedHouseRules[id] = rules;
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _properties = loadedProperties;
+        _propertyImageUrls = loadedImageUrls;
+        _propertyHouseRules = loadedHouseRules;
+        _loadingProperties = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadingProperties = false;
+        _propertiesError = error.toString();
+      });
+    }
+  }
 
   List<Property> get _filteredProperties {
     return _properties.where((property) {
@@ -140,6 +164,9 @@ final List<Property> _properties = [
           setState(() {
             _selectedIndex = index;
           });
+          if (index == 0) {
+            _loadProperties();
+          }
         },
         destinations: const [
           NavigationDestination(
@@ -164,7 +191,10 @@ final List<Property> _properties = [
   }
 
   Widget _buildExplorePage() {
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: _loadProperties,
+      child: ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       children: [
         const Text(
@@ -255,7 +285,27 @@ final List<Property> _properties = [
         ),
         const SizedBox(height: 14),
 
-        if (_filteredProperties.isEmpty)
+        if (_loadingProperties)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 35),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_propertiesError != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 25),
+            child: Column(
+              children: [
+                const Text('No se pudieron cargar los alojamientos.'),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: _loadProperties,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Reintentar'),
+                ),
+              ],
+            ),
+          )
+        else if (_filteredProperties.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 35),
             child: Column(
@@ -273,13 +323,17 @@ final List<Property> _properties = [
         else
           ..._filteredProperties.map(_buildPropertyCard),
       ],
+      ),
     );
   }
 
   Widget _buildPropertyCard(Property property) {
     final isFavorite = _favoriteIds.contains(property.id);
 
-    return Card(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 660),
+        child: Card(
       margin: const EdgeInsets.only(bottom: 22),
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
@@ -293,14 +347,28 @@ final List<Property> _properties = [
         children: [
           Stack(
             children: [
-              Container(
-                height: 170,
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
                 width: double.infinity,
                 color: _getPropertyColor(property),
-                child: Icon(
-                  _getPropertyIcon(property),
-                  size: 76,
-                  color: AppTheme.primary,
+                child: _propertyImageUrls.containsKey(property.id)
+                    ? Image.network(
+                        _propertyImageUrls[property.id]!,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          _getPropertyIcon(property),
+                          size: 76,
+                          color: AppTheme.primary,
+                        ),
+                      )
+                    : Icon(
+                        _getPropertyIcon(property),
+                        size: 76,
+                        color: AppTheme.primary,
+                      ),
                 ),
               ),
               Positioned(
@@ -415,6 +483,8 @@ final List<Property> _properties = [
                           MaterialPageRoute(
                             builder: (context) => PropertyDetailScreen(
                               property: property,
+                              imageUrl: _propertyImageUrls[property.id],
+                              houseRules: _propertyHouseRules[property.id],
                             ),
                         ),
                         );
@@ -427,6 +497,8 @@ final List<Property> _properties = [
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }
@@ -524,6 +596,54 @@ final List<Property> _properties = [
             fontWeight: FontWeight.w800,
           ),
         ),
+
+           if (SessionService.instance.isHost)
+             _buildComingSoonCard(
+               Icons.add_home_work_outlined,
+               'Publicar alojamiento',
+               'Crea una publicación con fotos, precio y descripción.',
+                onTap: () async {
+                 final created = await Navigator.push<bool>(
+                   context,
+                   MaterialPageRoute(
+                     builder: (context) =>
+                     const CreatePropertyScreen(),
+                    ),
+                  );
+
+                   if (!mounted)  return;
+
+                   if (created == true) {
+                     setState(() {
+                       _selectedIndex = 0;
+                     });
+                     _loadProperties();
+                     ScaffoldMessenger.of(context).showSnackBar(
+                       const SnackBar(
+                         content: Text(
+                           'Alojamiento publicado con éxito.',
+                          ),
+                        ),
+        );
+                     }
+                 },
+               ),
+        if (SessionService.instance.isHost)
+          _buildComingSoonCard(
+            Icons.inventory_2_outlined,
+            'Mis publicaciones',
+            'Consulta y elimina los alojamientos que publicaste.',
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyPropertiesScreen(),
+                ),
+              );
+              if (!mounted) return;
+              _loadProperties();
+            },
+          ),
         const SizedBox(height: 8),
         const Text(
           'Aquí podrás gestionar tus datos personales, '
@@ -647,5 +767,3 @@ IconData _getPropertyIcon(Property property) {
   return Icons.apartment_rounded;
  }
 }
-
-

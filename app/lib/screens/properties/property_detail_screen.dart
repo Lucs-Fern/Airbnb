@@ -6,10 +6,14 @@ import '../reservations/reservation_request_screen.dart';
 
 class PropertyDetailScreen extends StatelessWidget {
   final Property property;
+  final String? imageUrl;
+  final String? houseRules;
 
   const PropertyDetailScreen({
     super.key,
     required this.property,
+    this.imageUrl,
+    this.houseRules,
   });
 
   @override
@@ -18,9 +22,7 @@ class PropertyDetailScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Detalle del alojamiento',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -30,23 +32,25 @@ class PropertyDetailScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Container(
-                  height: 260,
-                  decoration: BoxDecoration(
+                // Fotografía real: se muestra completa, sin estirarla.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
                     color: const Color(0xFFDDECE2),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Icon(
-                    property.type == 'Habitación'
-                        ? Icons.bedroom_parent_rounded
-                        : Icons.apartment_rounded,
-                    size: 100,
-                    color: AppTheme.primary,
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: imageUrl != null && imageUrl!.isNotEmpty
+                          ? Image.network(
+                              imageUrl!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  _PropertyPlaceholder(type: property.type),
+                            )
+                          : _PropertyPlaceholder(type: property.type),
+                    ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -71,15 +75,11 @@ class PropertyDetailScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      icon: const Icon(
-                        Icons.favorite_border_rounded,
-                      ),
+                      icon: const Icon(Icons.favorite_border_rounded),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 10),
-
                 Row(
                   children: [
                     const Icon(
@@ -99,9 +99,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 20),
-
                 Text(
                   '\$${property.price.toStringAsFixed(0)} COP / mes',
                   style: const TextStyle(
@@ -110,9 +108,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -139,9 +135,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 28),
-
                 const Text(
                   'Descripción',
                   style: TextStyle(
@@ -149,9 +143,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
                   property.description,
                   style: const TextStyle(
@@ -160,9 +152,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     color: AppTheme.textSecondary,
                   ),
                 ),
-
                 const SizedBox(height: 28),
-
                 const Text(
                   'Características',
                   style: TextStyle(
@@ -170,9 +160,7 @@ class PropertyDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 ...property.amenities.map(
                   (amenity) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -184,19 +172,36 @@ class PropertyDetailScreen extends StatelessWidget {
                           size: 21,
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          amenity,
-                          style: const TextStyle(
-                            fontSize: 15,
+                        Flexible(
+                          child: Text(
+                            amenity,
+                            style: const TextStyle(fontSize: 15),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-
+                if (houseRules != null && houseRules!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Reglas de convivencia',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    houseRules!,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 25),
-
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
@@ -205,10 +210,7 @@ class PropertyDetailScreen extends StatelessWidget {
                   ),
                   child: const Row(
                     children: [
-                      Icon(
-                        Icons.map_outlined,
-                        color: AppTheme.primary,
-                      ),
+                      Icon(Icons.map_outlined, color: AppTheme.primary),
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -219,19 +221,16 @@ class PropertyDetailScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 ElevatedButton.icon(
                   onPressed: property.available
                       ? () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                              ReservationRequestScreen(
+                              builder: (context) => ReservationRequestScreen(
                                 property: property,
-                            ),
+                              ),
                             ),
                           );
                         }
@@ -239,7 +238,6 @@ class PropertyDetailScreen extends StatelessWidget {
                   icon: const Icon(Icons.calendar_month_rounded),
                   label: const Text('Solicitar reserva'),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),
@@ -250,44 +248,47 @@ class PropertyDetailScreen extends StatelessWidget {
   }
 }
 
+class _PropertyPlaceholder extends StatelessWidget {
+  final String type;
+  const _PropertyPlaceholder({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Icon(
+        type == 'Habitación'
+            ? Icons.bedroom_parent_rounded
+            : Icons.apartment_rounded,
+        size: 100,
+        color: AppTheme.primary,
+      ),
+    );
+  }
+}
+
 class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _InfoChip({
-    required this.icon,
-    required this.text,
-  });
+  const _InfoChip({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 9,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.border,
-        ),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 17,
-            color: AppTheme.primary,
-          ),
+          Icon(icon, size: 17, color: AppTheme.primary),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
           ),
         ],
       ),

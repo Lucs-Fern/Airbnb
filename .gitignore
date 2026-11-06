@@ -56,6 +56,8 @@ coverage/
 Thumbs.db
 desktop.ini
 
+/backend/uploads/
+
 # Local databases, backups and exports
 postgres-data/
 *.dump
