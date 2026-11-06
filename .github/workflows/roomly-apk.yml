@@ -3,6 +3,14 @@ name: Generar APK Roomly
 
 on:
   workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: 'Direccion HTTPS del backend con /api/auth'
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   build-apk:
@@ -31,7 +39,9 @@ jobs:
 
       - name: Generar APK Android
         working-directory: app
-        run: flutter build apk --debug
+        env:
+          ROOMLY_API_BASE_URL: ${{ inputs.api_base_url }}
+        run: flutter build apk --debug --dart-define="ROOMLY_API_BASE_URL=${ROOMLY_API_BASE_URL}"
 
       - name: Guardar APK generado
         uses: actions/upload-artifact@v4

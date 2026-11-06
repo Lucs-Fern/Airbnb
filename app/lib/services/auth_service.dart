@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  static const String baseUrl =
-      'http://127.0.0.1:3000/api/auth';
+  static const String baseUrl = String.fromEnvironment(
+  'ROOMLY_API_BASE_URL',
+  defaultValue: 'http://127.0.0.1:3000/api/auth',
+  );
 
   // INICIO DE SESIÓN
   Future<Map<String, dynamic>> login({
