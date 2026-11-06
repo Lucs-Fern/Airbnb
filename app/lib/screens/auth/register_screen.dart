@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,8 +10,7 @@ class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() =>
-      _RegisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
@@ -65,31 +63,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            response['message']?.toString() ??
-                'Usuario registrado con éxito.',
+            response['message']?.toString() ?? 'Usuario registrado con éxito.',
           ),
           backgroundColor: AppTheme.primary,
         ),
       );
 
       // Después de registrarse debe iniciar sesión.
-      Navigator.pushReplacementNamed(
-        context,
-        AppRoutes.login,
-      );
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     } catch (error) {
       if (!mounted) return;
 
-      final message = error.toString().replaceFirst(
-        'Exception: ',
-        '',
-      );
+      final message = error.toString().replaceFirst('Exception: ', '');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red.shade700,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
       );
 
       setState(() {
@@ -107,10 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           onPressed: _isLoading
               ? null
               : () {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    AppRoutes.login,
-                  );
+                  Navigator.pushReplacementNamed(context, AppRoutes.login);
                 },
         ),
       ),
@@ -119,19 +104,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 460,
-              ),
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(
-                      Icons.house_rounded,
-                      color: AppTheme.primary,
-                      size: 54,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.house_rounded,
+                          color: AppTheme.primary,
+                          size: 32,
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 20),
@@ -150,9 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const Text(
                       'Regístrate para encontrar un hogar '
                       'o publicar tu alojamiento.',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                      ),
+                      style: TextStyle(color: AppTheme.textSecondary),
                     ),
 
                     const SizedBox(height: 28),
@@ -166,14 +156,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       enabled: !_isLoading,
                       decoration: const InputDecoration(
                         hintText: 'Tu nombre completo',
-                        prefixIcon:
-                            Icon(Icons.person_outline_rounded),
+                        prefixIcon: Icon(Icons.person_outline_rounded),
                       ),
                       validator: (value) {
                         final name = value?.trim() ?? '';
 
-                        if (name.length < 2 ||
-                            name.length > 120) {
+                        if (name.length < 2 || name.length > 120) {
                           return 'Ingresa un nombre válido.';
                         }
 
@@ -193,15 +181,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
                         hintText: 'nombre@correo.com',
-                        prefixIcon:
-                            Icon(Icons.mail_outline_rounded),
+                        prefixIcon: Icon(Icons.mail_outline_rounded),
                       ),
                       validator: (value) {
                         final email = value?.trim() ?? '';
 
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(email) ||
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(email) ||
                             email.length > 255) {
                           return 'Ingresa un correo válido.';
                         }
@@ -222,8 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
                         hintText: 'Número de contacto',
-                        prefixIcon:
-                            Icon(Icons.phone_outlined),
+                        prefixIcon: Icon(Icons.phone_outlined),
                       ),
                       validator: (value) {
                         if ((value ?? '').length > 25) {
@@ -242,8 +227,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedRole,
                       decoration: const InputDecoration(
-                        prefixIcon:
-                            Icon(Icons.people_outline_rounded),
+                        prefixIcon: Icon(Icons.people_outline_rounded),
                       ),
                       hint: const Text('Selecciona un rol'),
                       items: const [
@@ -287,16 +271,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _hidePassword,
                       decoration: InputDecoration(
                         hintText: 'Mínimo 8 caracteres',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline_rounded,
-                        ),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded),
                         suffixIcon: IconButton(
                           onPressed: _isLoading
                               ? null
                               : () {
                                   setState(() {
-                                    _hidePassword =
-                                        !_hidePassword;
+                                    _hidePassword = !_hidePassword;
                                   });
                                 },
                           icon: Icon(
@@ -333,8 +314,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _hidePassword,
                       decoration: const InputDecoration(
                         hintText: 'Repite tu contraseña',
-                        prefixIcon:
-                            Icon(Icons.lock_reset_rounded),
+                        prefixIcon: Icon(Icons.lock_reset_rounded),
                       ),
                       validator: (value) {
                         if (value != _passwordController.text) {
@@ -353,9 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? const SizedBox(
                               height: 22,
                               width: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Text('Crear cuenta'),
                     ),
@@ -364,12 +342,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     // VOLVER A LOGIN
                     Row(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Flexible(
-                          child: Text('¿Ya tienes cuenta?'),
-                        ),
+                        const Flexible(child: Text('¿Ya tienes cuenta?')),
                         TextButton(
                           onPressed: _isLoading
                               ? null

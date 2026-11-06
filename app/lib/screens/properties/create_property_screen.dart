@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -12,12 +11,10 @@ class CreatePropertyScreen extends StatefulWidget {
   const CreatePropertyScreen({super.key});
 
   @override
-  State<CreatePropertyScreen> createState() =>
-      _CreatePropertyScreenState();
+  State<CreatePropertyScreen> createState() => _CreatePropertyScreenState();
 }
 
-class _CreatePropertyScreenState
-    extends State<CreatePropertyScreen> {
+class _CreatePropertyScreenState extends State<CreatePropertyScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _title = TextEditingController();
@@ -65,10 +62,7 @@ class _CreatePropertyScreenState
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red.shade700),
     );
   }
 
@@ -96,9 +90,7 @@ class _CreatePropertyScreenState
         _photoBytes = bytes;
       });
     } catch (_) {
-      _showError(
-        'No fue posible seleccionar la fotografía.',
-      );
+      _showError('No fue posible seleccionar la fotografía.');
     }
   }
 
@@ -110,9 +102,7 @@ class _CreatePropertyScreenState
     }
 
     if (!SessionService.instance.isHost) {
-      _showError(
-        'Solo los anfitriones pueden publicar alojamientos.',
-      );
+      _showError('Solo los anfitriones pueden publicar alojamientos.');
       return;
     }
 
@@ -144,9 +134,7 @@ class _CreatePropertyScreenState
 
       Navigator.pop(context, true);
     } catch (error) {
-      _showError(
-        error.toString().replaceFirst('Exception: ', ''),
-      );
+      _showError(error.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() {
@@ -154,6 +142,35 @@ class _CreatePropertyScreenState
         });
       }
     }
+  }
+
+  Widget _sectionHeading(IconData icon, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 21, color: AppTheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _field(
@@ -169,12 +186,7 @@ class _CreatePropertyScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
@@ -182,9 +194,7 @@ class _CreatePropertyScreenState
             maxLines: maxLines,
             keyboardType: keyboardType,
             validator: validator,
-            decoration: InputDecoration(
-              hintText: hint,
-            ),
+            decoration: InputDecoration(hintText: hint),
           ),
         ],
       ),
@@ -194,9 +204,7 @@ class _CreatePropertyScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Publicar alojamiento'),
-      ),
+      appBar: AppBar(title: const Text('Publicar alojamiento')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -208,21 +216,20 @@ class _CreatePropertyScreenState
                 children: [
                   const Text(
                     'Nueva publicación',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'Completa la información del alojamiento '
                     'que deseas ofrecer.',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                    ),
+                    style: TextStyle(color: AppTheme.textSecondary),
                   ),
                   const SizedBox(height: 24),
 
+                  _sectionHeading(
+                    Icons.photo_camera_outlined,
+                    'Fotografía del espacio',
+                  ),
                   // FOTOGRAFÍA
                   if (_photoBytes != null)
                     ClipRRect(
@@ -239,8 +246,8 @@ class _CreatePropertyScreenState
                       height: 170,
                       decoration: BoxDecoration(
                         color: AppTheme.primaryLight,
-                        borderRadius:
-                            BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.sage),
                       ),
                       child: const Icon(
                         Icons.add_photo_alternate_outlined,
@@ -253,9 +260,7 @@ class _CreatePropertyScreenState
 
                   OutlinedButton.icon(
                     onPressed: _saving ? null : _selectPhoto,
-                    icon: const Icon(
-                      Icons.photo_library_outlined,
-                    ),
+                    icon: const Icon(Icons.photo_library_outlined),
                     label: Text(
                       _photo == null
                           ? 'Seleccionar fotografía'
@@ -264,6 +269,10 @@ class _CreatePropertyScreenState
                   ),
 
                   const SizedBox(height: 22),
+                  _sectionHeading(
+                    Icons.edit_note_rounded,
+                    'Información general',
+                  ),
 
                   _field(
                     'Título del alojamiento',
@@ -271,8 +280,7 @@ class _CreatePropertyScreenState
                     hint: 'Ej. Habitación privada en Cali',
                     validator: (value) {
                       final text = value?.trim() ?? '';
-                      if (text.length < 5 ||
-                          text.length > 150) {
+                      if (text.length < 5 || text.length > 150) {
                         return 'Escribe un título de 5 a 150 caracteres.';
                       }
                       return null;
@@ -286,8 +294,7 @@ class _CreatePropertyScreenState
                     hint: 'Describe el espacio y sus características',
                     validator: (value) {
                       final text = value?.trim() ?? '';
-                      if (text.length < 20 ||
-                          text.length > 5000) {
+                      if (text.length < 20 || text.length > 5000) {
                         return 'La descripción debe tener entre 20 y 5000 caracteres.';
                       }
                       return null;
@@ -300,8 +307,7 @@ class _CreatePropertyScreenState
                     hint: 'Ej. San Fernando, Cali',
                     validator: (value) {
                       final text = value?.trim() ?? '';
-                      if (text.length < 3 ||
-                          text.length > 200) {
+                      if (text.length < 3 || text.length > 200) {
                         return 'Ingresa una ubicación válida.';
                       }
                       return null;
@@ -310,9 +316,7 @@ class _CreatePropertyScreenState
 
                   const Text(
                     'Tipo de alojamiento',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
 
@@ -339,7 +343,10 @@ class _CreatePropertyScreenState
 
                   const SizedBox(height: 18),
 
-                  // MODIFICACIÓN 1:
+                  _sectionHeading(
+                    Icons.payments_outlined,
+                    'Precio y capacidad',
+                  ),
                   // El precio cambia según la duración.
                   _field(
                     _duration == 'Corto plazo'
@@ -351,8 +358,7 @@ class _CreatePropertyScreenState
                         : 'Ej. 550000',
                     keyboardType: TextInputType.number,
                     validator: (value) {
-                      final price =
-                          double.tryParse(value?.trim() ?? '');
+                      final price = double.tryParse(value?.trim() ?? '');
                       if (price == null || price <= 0) {
                         return 'Ingresa un precio válido.';
                       }
@@ -366,11 +372,8 @@ class _CreatePropertyScreenState
                     hint: 'Ej. 2',
                     keyboardType: TextInputType.number,
                     validator: (value) {
-                      final number =
-                          int.tryParse(value?.trim() ?? '');
-                      if (number == null ||
-                          number < 1 ||
-                          number > 30) {
+                      final number = int.tryParse(value?.trim() ?? '');
+                      if (number == null || number < 1 || number > 30) {
                         return 'Ingresa entre 1 y 30 personas.';
                       }
                       return null;
@@ -379,9 +382,7 @@ class _CreatePropertyScreenState
 
                   const Text(
                     'Duración del arrendamiento',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
 
@@ -411,8 +412,7 @@ class _CreatePropertyScreenState
                     onChanged: _saving
                         ? null
                         : (value) {
-                            if (value != null &&
-                                value != _duration) {
+                            if (value != null && value != _duration) {
                               setState(() {
                                 _duration = value;
                                 _price.clear();
@@ -423,12 +423,9 @@ class _CreatePropertyScreenState
 
                   const SizedBox(height: 24),
 
-                  const Text(
+                  _sectionHeading(
+                    Icons.checklist_rounded,
                     'Servicios del alojamiento',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
                   ),
                   const SizedBox(height: 10),
 
@@ -455,6 +452,7 @@ class _CreatePropertyScreenState
                   ),
 
                   const SizedBox(height: 22),
+                  _sectionHeading(Icons.rule_outlined, 'Convivencia'),
 
                   _field(
                     'Reglas de convivencia (opcional)',
@@ -479,17 +477,11 @@ class _CreatePropertyScreenState
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(
-                            Icons.publish_rounded,
-                          ),
+                        : const Icon(Icons.publish_rounded),
                     label: Text(
-                      _saving
-                          ? 'Publicando...'
-                          : 'Publicar alojamiento',
+                      _saving ? 'Publicando...' : 'Publicar alojamiento',
                     ),
                   ),
 

@@ -51,10 +51,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -66,9 +63,9 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     try {
       await _service.deleteProperty(id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Publicación eliminada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Publicación eliminada.')));
       await _refresh();
     } catch (error) {
       if (!mounted) return;
@@ -117,11 +114,42 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  const Text(
-                    'Gestiona los alojamientos que publicaste.',
-                    style: TextStyle(color: AppTheme.textSecondary),
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.home_work_outlined,
+                          size: 36,
+                          color: AppTheme.primary,
+                        ),
+                        const SizedBox(width: 15),
+                        const Expanded(
+                          child: Text(
+                            'Gestiona los alojamientos que publicaste.',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${properties.length}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primary,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   if (properties.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
@@ -143,20 +171,30 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           margin: const EdgeInsets.only(bottom: 14),
                           clipBehavior: Clip.antiAlias,
                           child: Padding(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                SizedBox(
-                                  width: 110,
-                                  height: 90,
-                                  child: imageUrl != null
-                                      ? Image.network(
-                                          imageUrl,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.house_outlined),
-                                        )
-                                      : const Icon(Icons.house_outlined),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Container(
+                                    width: 110,
+                                    height: 90,
+                                    color: AppTheme.primaryLight,
+                                    child: imageUrl != null
+                                        ? Image.network(
+                                            imageUrl,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, _, _) =>
+                                                const Icon(
+                                                  Icons.house_outlined,
+                                                  color: AppTheme.primary,
+                                                ),
+                                          )
+                                        : const Icon(
+                                            Icons.house_outlined,
+                                            color: AppTheme.primary,
+                                          ),
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(

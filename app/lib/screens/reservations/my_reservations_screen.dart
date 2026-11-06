@@ -9,51 +9,62 @@ class MyReservationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reservations =
-        ReservationRepository.instance.reservations;
+    final reservations = ReservationRepository.instance.reservations;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Mis reservas',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 700,
-            ),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: reservations.isEmpty
                 ? _buildEmptyState()
                 : ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      const Text(
-                        'Tus solicitudes',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_month_rounded,
+                              color: AppTheme.primary,
+                              size: 28,
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Tus solicitudes',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         'Aquí puedes consultar el estado de '
                         'tus solicitudes de hospedaje.',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                        ),
+                        style: TextStyle(color: AppTheme.textSecondary),
                       ),
                       const SizedBox(height: 24),
 
                       ...reservations.map(
                         (reservation) =>
-                            _ReservationCard(
-                          reservation: reservation,
-                        ),
+                            _ReservationCard(reservation: reservation),
                       ),
                     ],
                   ),
@@ -77,20 +88,14 @@ class MyReservationsScreen extends StatelessWidget {
           SizedBox(height: 18),
           Text(
             'Todavía no tienes reservas',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 8),
           Text(
             'Cuando envíes una solicitud de hospedaje '
             'aparecerá aquí.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              height: 1.5,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -101,23 +106,17 @@ class MyReservationsScreen extends StatelessWidget {
 class _ReservationCard extends StatelessWidget {
   final Reservation reservation;
 
-  const _ReservationCard({
-    required this.reservation,
-  });
+  const _ReservationCard({required this.reservation});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 16,
-      ),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.border,
-        ),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,9 +145,7 @@ class _ReservationCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _StatusChip(
-                status: reservation.status,
-              ),
+              _StatusChip(status: reservation.status),
             ],
           ),
 
@@ -157,9 +154,7 @@ class _ReservationCard extends StatelessWidget {
           _InfoRow(
             icon: Icons.login_rounded,
             label: 'Entrada',
-            value: _formatDate(
-              reservation.startDate,
-            ),
+            value: _formatDate(reservation.startDate),
           ),
 
           const SizedBox(height: 10),
@@ -167,9 +162,7 @@ class _ReservationCard extends StatelessWidget {
           _InfoRow(
             icon: Icons.logout_rounded,
             label: 'Salida',
-            value: _formatDate(
-              reservation.endDate,
-            ),
+            value: _formatDate(reservation.endDate),
           ),
 
           const SizedBox(height: 10),
@@ -192,14 +185,10 @@ class _ReservationCard extends StatelessWidget {
     );
   }
 
-  static String _formatDate(
-    DateTime date,
-  ) {
-    final day =
-        date.day.toString().padLeft(2, '0');
+  static String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
 
-    final month =
-        date.month.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
     return '$day/$month/${date.year}';
   }
@@ -220,25 +209,11 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 19,
-          color: AppTheme.textSecondary,
-        ),
+        Icon(icon, size: 19, color: AppTheme.textSecondary),
         const SizedBox(width: 9),
-        Text(
-          '$label:',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-          ),
-        ),
+        Text('$label:', style: const TextStyle(color: AppTheme.textSecondary)),
         const SizedBox(width: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -247,9 +222,7 @@ class _InfoRow extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final ReservationStatus status;
 
-  const _StatusChip({
-    required this.status,
-  });
+  const _StatusChip({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -271,10 +244,7 @@ class _StatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(20),
@@ -282,11 +252,7 @@ class _StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: AppTheme.primary,
-          ),
+          Icon(icon, size: 15, color: AppTheme.primary),
           const SizedBox(width: 5),
           Text(
             text,

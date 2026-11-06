@@ -8,86 +8,70 @@ class HostRequestsScreen extends StatefulWidget {
   const HostRequestsScreen({super.key});
 
   @override
-  State<HostRequestsScreen> createState() =>
-      _HostRequestsScreenState();
+  State<HostRequestsScreen> createState() => _HostRequestsScreenState();
 }
 
-class _HostRequestsScreenState
-    extends State<HostRequestsScreen> {
+class _HostRequestsScreenState extends State<HostRequestsScreen> {
   List<Reservation> get _reservations =>
       ReservationRepository.instance.reservations;
 
-  
-Future<void> _updateStatus(
-  Reservation reservation,
-  ReservationStatus newStatus,
-) async {
-  final isAccept =
-      newStatus == ReservationStatus.accepted;
+  Future<void> _updateStatus(
+    Reservation reservation,
+    ReservationStatus newStatus,
+  ) async {
+    final isAccept = newStatus == ReservationStatus.accepted;
 
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: Text(
-          isAccept
-              ? 'Aceptar solicitud'
-              : 'Rechazar solicitud',
-        ),
-        content: Text(
-          '¿Estás seguro de que deseas '
-          '${isAccept ? "aceptar" : "rechazar"} '
-          'la solicitud para '
-          '${reservation.propertyTitle}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, false);
-            },
-            child: const Text('Cancelar'),
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(isAccept ? 'Aceptar solicitud' : 'Rechazar solicitud'),
+          content: Text(
+            '¿Estás seguro de que deseas '
+            '${isAccept ? "aceptar" : "rechazar"} '
+            'la solicitud para '
+            '${reservation.propertyTitle}?',
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext, true);
-            },
-            child: Text(
-              isAccept ? 'Aceptar' : 'Rechazar',
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancelar'),
             ),
-          ),
-        ],
-      );
-    },
-  );
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: Text(isAccept ? 'Aceptar' : 'Rechazar'),
+            ),
+          ],
+        );
+      },
+    );
 
-  if (!mounted || confirmed != true) {
-    return;
+    if (!mounted || confirmed != true) {
+      return;
+    }
+
+    final updated = ReservationRepository.instance.updateReservationStatus(
+      reservation.id,
+      newStatus,
+    );
+
+    if (updated) {
+      setState(() {});
+    }
+
+    final message = updated
+        ? (isAccept
+              ? 'Solicitud aceptada con éxito.'
+              : 'Solicitud rechazada con éxito.')
+        : 'No fue posible actualizar la solicitud.';
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
-
-  final updated =
-      ReservationRepository.instance
-          .updateReservationStatus(
-    reservation.id,
-    newStatus,
-  );
-
-  if (updated) {
-    setState(() {});
-  }
-
-  final message = updated
-      ? (isAccept
-          ? 'Solicitud aceptada con éxito.'
-          : 'Solicitud rechazada con éxito.')
-      : 'No fue posible actualizar la solicitud.';
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-    ),
-  );
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -95,27 +79,43 @@ Future<void> _updateStatus(
       appBar: AppBar(
         title: const Text(
           'Solicitudes recibidas',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 750,
-            ),
+            constraints: const BoxConstraints(maxWidth: 750),
             child: _reservations.isEmpty
                 ? _buildEmptyState()
                 : ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      const Text(
-                        'Solicitudes de hospedaje',
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w800,
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.inbox_outlined,
+                              color: AppTheme.primary,
+                              size: 28,
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Solicitudes de hospedaje',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -129,9 +129,7 @@ Future<void> _updateStatus(
                       ),
                       const SizedBox(height: 24),
 
-                      ..._reservations.map(
-                        _buildRequestCard,
-                      ),
+                      ..._reservations.map(_buildRequestCard),
                     ],
                   ),
           ),
@@ -146,46 +144,31 @@ Future<void> _updateStatus(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 70,
-            color: AppTheme.textSecondary,
-          ),
+          Icon(Icons.inbox_outlined, size: 70, color: AppTheme.textSecondary),
           SizedBox(height: 18),
           Text(
             'No hay solicitudes',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: 8),
           Text(
             'Las solicitudes de hospedaje aparecerán aquí.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRequestCard(
-    Reservation reservation,
-  ) {
+  Widget _buildRequestCard(Reservation reservation) {
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 18,
-      ),
+      margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.border,
-        ),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,74 +197,44 @@ Future<void> _updateStatus(
                   ),
                 ),
               ),
-              _StatusChip(
-                status: reservation.status,
-              ),
+              _StatusChip(status: reservation.status),
             ],
           ),
 
           const SizedBox(height: 18),
 
-          _InfoRow(
-            label: 'Entrada',
-            value: _formatDate(
-              reservation.startDate,
-            ),
-          ),
+          _InfoRow(label: 'Entrada', value: _formatDate(reservation.startDate)),
 
           const SizedBox(height: 8),
 
-          _InfoRow(
-            label: 'Salida',
-            value: _formatDate(
-              reservation.endDate,
-            ),
-          ),
+          _InfoRow(label: 'Salida', value: _formatDate(reservation.endDate)),
 
           const SizedBox(height: 8),
 
-          _InfoRow(
-            label: 'Personas',
-            value: '${reservation.guests}',
-          ),
+          _InfoRow(label: 'Personas', value: '${reservation.guests}'),
 
           const SizedBox(height: 20),
 
-          if (reservation.status ==
-              ReservationStatus.pending)
+          if (reservation.status == ReservationStatus.pending)
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      _updateStatus(
-                        reservation,
-                        ReservationStatus.rejected,
-                      );
+                      _updateStatus(reservation, ReservationStatus.rejected);
                     },
-                    icon: const Icon(
-                      Icons.close_rounded,
-                    ),
-                    label: const Text(
-                      'Rechazar',
-                    ),
+                    icon: const Icon(Icons.close_rounded),
+                    label: const Text('Rechazar'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      _updateStatus(
-                        reservation,
-                        ReservationStatus.accepted,
-                      );
+                      _updateStatus(reservation, ReservationStatus.accepted);
                     },
-                    icon: const Icon(
-                      Icons.check_rounded,
-                    ),
-                    label: const Text(
-                      'Aceptar',
-                    ),
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('Aceptar'),
                   ),
                 ),
               ],
@@ -295,8 +248,7 @@ Future<void> _updateStatus(
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                reservation.status ==
-                        ReservationStatus.accepted
+                reservation.status == ReservationStatus.accepted
                     ? 'Esta solicitud fue aceptada.'
                     : 'Esta solicitud fue rechazada.',
                 textAlign: TextAlign.center,
@@ -311,14 +263,10 @@ Future<void> _updateStatus(
     );
   }
 
-  String _formatDate(
-    DateTime date,
-  ) {
-    final day =
-        date.day.toString().padLeft(2, '0');
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
 
-    final month =
-        date.month.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
     return '$day/$month/${date.year}';
   }
@@ -328,28 +276,15 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          '$label:',
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-          ),
-        ),
+        Text('$label:', style: const TextStyle(color: AppTheme.textSecondary)),
         const SizedBox(width: 7),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -358,9 +293,7 @@ class _InfoRow extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final ReservationStatus status;
 
-  const _StatusChip({
-    required this.status,
-  });
+  const _StatusChip({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -371,19 +304,13 @@ class _StatusChip extends StatelessWidget {
     };
 
     final icon = switch (status) {
-      ReservationStatus.pending =>
-        Icons.schedule_rounded,
-      ReservationStatus.accepted =>
-        Icons.check_circle_outline_rounded,
-      ReservationStatus.rejected =>
-        Icons.cancel_outlined,
+      ReservationStatus.pending => Icons.schedule_rounded,
+      ReservationStatus.accepted => Icons.check_circle_outline_rounded,
+      ReservationStatus.rejected => Icons.cancel_outlined,
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(20),
@@ -391,11 +318,7 @@ class _StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: AppTheme.primary,
-          ),
+          Icon(icon, size: 15, color: AppTheme.primary),
           const SizedBox(width: 5),
           Text(
             text,

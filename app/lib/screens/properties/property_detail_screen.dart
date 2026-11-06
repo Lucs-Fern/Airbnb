@@ -34,11 +34,11 @@ class PropertyDetailScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                // Fotografía real: se muestra completa, sin estirarla.
+                // Fotografía completa, sin estirarla ni recortarla.
                 ClipRRect(
                   borderRadius: BorderRadius.circular(24),
                   child: Container(
-                    color: const Color(0xFFDDECE2),
+                    color: AppTheme.primaryLight,
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
                       child: imageUrl != null && imageUrl!.isNotEmpty
@@ -71,9 +71,7 @@ class PropertyDetailScreen extends StatelessWidget {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'Alojamiento agregado a favoritos.',
-                            ),
+                            content: Text('Alojamiento agregado a favoritos.'),
                           ),
                         );
                       },
@@ -102,13 +100,35 @@ class PropertyDetailScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text(
-                  '\$${property.price.toStringAsFixed(0)} COP / '
-                  '${priceUnit == 'night' ? 'noche' : 'mes'}',
-                  style: const TextStyle(
-                    color: AppTheme.primary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.payments_outlined,
+                        color: AppTheme.primary,
+                        size: 27,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '\$${property.price.toStringAsFixed(0)} COP / '
+                          '${priceUnit == 'night' ? 'noche' : 'mes'}',
+                          style: const TextStyle(
+                            color: AppTheme.primary,
+                            fontSize: 21,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -116,10 +136,7 @@ class PropertyDetailScreen extends StatelessWidget {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    _InfoChip(
-                      icon: Icons.home_outlined,
-                      text: property.type,
-                    ),
+                    _InfoChip(icon: Icons.home_outlined, text: property.type),
                     _InfoChip(
                       icon: Icons.people_outline_rounded,
                       text: '${property.capacity} persona(s)',
@@ -132,19 +149,16 @@ class PropertyDetailScreen extends StatelessWidget {
                       icon: property.available
                           ? Icons.check_circle_outline
                           : Icons.cancel_outlined,
-                      text: property.available
-                          ? 'Disponible'
-                          : 'No disponible',
+                      text: property.available ? 'Disponible' : 'No disponible',
                     ),
                   ],
                 ),
                 const SizedBox(height: 28),
+                const Divider(),
+                const SizedBox(height: 18),
                 const Text(
                   'Descripción',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -156,12 +170,11 @@ class PropertyDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 28),
+                const Divider(),
+                const SizedBox(height: 18),
                 const Text(
                   'Características',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 12),
                 ...property.amenities.map(
@@ -189,10 +202,7 @@ class PropertyDetailScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   const Text(
                     'Reglas de convivencia',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -231,9 +241,8 @@ class PropertyDetailScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ReservationRequestScreen(
-                                property: property,
-                              ),
+                              builder: (context) =>
+                                  ReservationRequestScreen(property: property),
                             ),
                           );
                         }
