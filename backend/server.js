@@ -11,10 +11,25 @@ const authRoutes = require('./src/routes/auth_routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
+const path = require('node:path');
+
+const propertyRoutes = require(
+  './src/routes/property_routes'
+);
+
 // Configuración
 app.use(cors());
 app.use(express.json());
 app.use('/api/auth', authRoutes);
+// Permitir visualizar fotografías
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, 'uploads'))
+);
+
+// Rutas de publicaciones
+app.use('/api/properties', propertyRoutes);
 
 // Comprobar que el servidor funciona
 app.get('/api/health', (req, res) => {
