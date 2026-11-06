@@ -8,12 +8,14 @@ class PropertyDetailScreen extends StatelessWidget {
   final Property property;
   final String? imageUrl;
   final String? houseRules;
+  final String priceUnit;
 
   const PropertyDetailScreen({
     super.key,
     required this.property,
     this.imageUrl,
     this.houseRules,
+    this.priceUnit = 'month',
   });
 
   @override
@@ -101,7 +103,8 @@ class PropertyDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  '\$${property.price.toStringAsFixed(0)} COP / mes',
+                  '\$${property.price.toStringAsFixed(0)} COP / '
+                  '${priceUnit == 'night' ? 'noche' : 'mes'}',
                   style: const TextStyle(
                     color: AppTheme.primary,
                     fontSize: 22,

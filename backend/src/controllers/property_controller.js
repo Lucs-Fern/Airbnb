@@ -26,6 +26,7 @@ async function createProperty(req, res) {
 
     const price = Number(req.body.price_monthly);
     const capacity = Number(req.body.capacity);
+    const priceUnit = duration === 'Corto plazo' ? 'night' : 'month';
 
     let amenities;
 
@@ -105,40 +106,44 @@ async function createProperty(req, res) {
     const imagePath = `/uploads/${filename}`;
 
     // Guardar publicación en PostgreSQL
-    const result = await pool.query(
-      `INSERT INTO properties (
-        host_id,
-        title,
-        description,
-        location,
-        price_monthly,
-        type,
-        capacity,
-        duration,
-        amenities,
-        available,
-        image_path,
-        house_rules
-      )
-      VALUES (
-        $1, $2, $3, $4, $5, $6,
-        $7, $8, $9, TRUE, $10, $11
-      )
-      RETURNING *`,
-      [
-        req.userId,
-        title.trim(),
-        description.trim(),
-        location.trim(),
-        price,
-        type,
-        capacity,
-        duration.trim(),
-        amenities,
-        imagePath,
-        house_rules || null
-      ]
-    );
+    
+const result = await pool.query(
+  `INSERT INTO properties (
+    host_id,
+    title,
+    description,
+    location,
+    price_monthly,
+    price_unit,
+    type,
+    capacity,
+    duration,
+    amenities,
+    available,
+    image_path,
+    house_rules
+  )
+  VALUES (
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9, $10, TRUE, $11, $12
+  )
+  RETURNING *`,
+  [
+    req.userId,
+    title.trim(),
+    description.trim(),
+    location.trim(),
+    price,
+    priceUnit,
+    type,
+    capacity,
+    duration.trim(),
+    amenities,
+    imagePath,
+    house_rules || null
+  ]
+);
+
 
     return res.status(201).json({
       success: true,

@@ -339,10 +339,16 @@ class _CreatePropertyScreenState
 
                   const SizedBox(height: 18),
 
+                  // MODIFICACIÓN 1:
+                  // El precio cambia según la duración.
                   _field(
-                    'Precio mensual (COP)',
+                    _duration == 'Corto plazo'
+                        ? 'Precio por noche (COP)'
+                        : 'Precio mensual (COP)',
                     _price,
-                    hint: 'Ej. 550000',
+                    hint: _duration == 'Corto plazo'
+                        ? 'Ej. 85000'
+                        : 'Ej. 550000',
                     keyboardType: TextInputType.number,
                     validator: (value) {
                       final price =
@@ -399,13 +405,18 @@ class _CreatePropertyScreenState
                         child: Text('Mediano y largo plazo'),
                       ),
                     ],
+
+                    // MODIFICACIÓN 2:
+                    // Al cambiar la duración se limpia el precio.
                     onChanged: _saving
                         ? null
                         : (value) {
-                            if (value != null) {
-                              setState(
-                                () => _duration = value,
-                              );
+                            if (value != null &&
+                                value != _duration) {
+                              setState(() {
+                                _duration = value;
+                                _price.clear();
+                              });
                             }
                           },
                   ),

@@ -1,4 +1,5 @@
-import '../reservations/host_requests_screen.dart';//temporal
+
+import '../reservations/host_requests_screen.dart'; //temporal
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -27,9 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final Set<int> _favoriteIds = {};
 
   final PropertyService _propertyService = PropertyService();
+
   List<Property> _properties = [];
   Map<int, String> _propertyImageUrls = {};
+  Map<int, String> _propertyPriceUnits = {};
   Map<int, String> _propertyHouseRules = {};
+
   bool _loadingProperties = true;
   String? _propertiesError;
 
@@ -47,15 +51,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final rows = await _propertyService.getProperties();
+
       final loadedProperties = <Property>[];
       final loadedImageUrls = <int, String>{};
       final loadedHouseRules = <int, String>{};
+      final loadedPriceUnits = <int, String>{};
 
       for (final row in rows) {
         final id = int.parse(row['id'].toString());
-        final capacity = int.tryParse(row['capacity'].toString()) ?? 1;
-        final price = double.tryParse(row['price_monthly'].toString()) ?? 0.0;
+
+        // NUEVO: Obtener la unidad real del precio.
+        loadedPriceUnits[id] =
+            row['price_unit'] == 'night' ? 'night' : 'month';
+
+        final capacity =
+            int.tryParse(row['capacity'].toString()) ?? 1;
+
+        final price =
+            double.tryParse(row['price_monthly'].toString()) ?? 0.0;
+
         final rawAmenities = row['amenities'];
+
         final amenities = rawAmenities is List
             ? rawAmenities.map((item) => item.toString()).toList()
             : <String>[];
@@ -76,24 +92,34 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         final imagePath = row['image_path']?.toString() ?? '';
+
         if (imagePath.isNotEmpty) {
-          loadedImageUrls[id] = _propertyService.getImageUrl(imagePath);
+          loadedImageUrls[id] =
+              _propertyService.getImageUrl(imagePath);
         }
+
         final rules = row['house_rules']?.toString() ?? '';
+
         if (rules.trim().isNotEmpty) {
           loadedHouseRules[id] = rules;
         }
       }
 
       if (!mounted) return;
+
       setState(() {
         _properties = loadedProperties;
         _propertyImageUrls = loadedImageUrls;
         _propertyHouseRules = loadedHouseRules;
+
+        // NUEVO: Guardar las unidades de precio.
+        _propertyPriceUnits = loadedPriceUnits;
+
         _loadingProperties = false;
       });
     } catch (error) {
       if (!mounted) return;
+
       setState(() {
         _loadingProperties = false;
         _propertiesError = error.toString();
@@ -104,11 +130,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Property> get _filteredProperties {
     return _properties.where((property) {
       final matchesSearch =
-          property.title.toLowerCase().contains(_searchText.toLowerCase()) ||
-          property.location.toLowerCase().contains(_searchText.toLowerCase());
+          property.title
+              .toLowerCase()
+              .contains(_searchText.toLowerCase()) ||
+          property.location
+              .toLowerCase()
+              .contains(_searchText.toLowerCase());
 
       final matchesType =
-          _selectedType == 'Todos' || property.type == _selectedType;
+          _selectedType == 'Todos' ||
+          property.type == _selectedType;
 
       return matchesSearch && matchesType;
     }).toList();
@@ -140,13 +171,16 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Notificaciones',
             onPressed: () {
-              _showMessage('Las notificaciones se implementarán más adelante.');
+              _showMessage(
+                'Las notificaciones se implementarán más adelante.',
+              );
             },
             icon: const Icon(Icons.notifications_none_rounded),
           ),
           const SizedBox(width: 8),
         ],
       ),
+
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
@@ -158,12 +192,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
           setState(() {
             _selectedIndex = index;
           });
+
           if (index == 0) {
             _loadProperties();
           }
@@ -194,135 +230,155 @@ class _HomeScreenState extends State<HomeScreen> {
     return RefreshIndicator(
       onRefresh: _loadProperties,
       child: ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      children: [
-        const Text(
-          'Encuentra tu próximo hogar',
-          style: TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Espacios que se adaptan a tu vida y a tu presupuesto.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.5,
-            color: AppTheme.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 22),
-
-        TextField(
-          onChanged: (value) {
-            setState(() {
-              _searchText = value.trim();
-            });
-          },
-          decoration: const InputDecoration(
-            hintText: 'Ciudad, barrio o alojamiento',
-            prefixIcon: Icon(Icons.search_rounded),
-          ),
-        ),
-        const SizedBox(height: 14),
-
-        OutlinedButton.icon(
-          onPressed: () {
-            _showMessage('Los filtros avanzados se implementarán después.');
-          },
-          icon: const Icon(Icons.tune_rounded),
-          label: const Text('Más filtros'),
-        ),
-        const SizedBox(height: 22),
-
-        const Text(
-          'Tipo de alojamiento',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ['Todos', 'Apartamento', 'Habitación'].map((type) {
-            return ChoiceChip(
-              label: Text(type),
-              selected: _selectedType == type,
-              onSelected: (_) {
-                setState(() {
-                  _selectedType = type;
-                });
-              },
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 24),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Alojamientos para ti',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        children: [
+          const Text(
+            'Encuentra tu próximo hogar',
+            style: TextStyle(
+              fontSize: 27,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
             ),
-            Text(
-              '${_filteredProperties.length} resultados',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
+          ),
 
-        if (_loadingProperties)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 35),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_propertiesError != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 25),
-            child: Column(
-              children: [
-                const Text('No se pudieron cargar los alojamientos.'),
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: _loadProperties,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Reintentar'),
+          const SizedBox(height: 8),
+
+          const Text(
+            'Espacios que se adaptan a tu vida y a tu presupuesto.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                _searchText = value.trim();
+              });
+            },
+            decoration: const InputDecoration(
+              hintText: 'Ciudad, barrio o alojamiento',
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          OutlinedButton.icon(
+            onPressed: () {
+              _showMessage(
+                'Los filtros avanzados se implementarán después.',
+              );
+            },
+            icon: const Icon(Icons.tune_rounded),
+            label: const Text('Más filtros'),
+          ),
+
+          const SizedBox(height: 22),
+
+          const Text(
+            'Tipo de alojamiento',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              'Todos',
+              'Apartamento',
+              'Habitación',
+            ].map((type) {
+              return ChoiceChip(
+                label: Text(type),
+                selected: _selectedType == type,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedType = type;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 24),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Alojamientos para ti',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
                 ),
-              ],
-            ),
-          )
-        else if (_filteredProperties.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 35),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.search_off_rounded,
-                  size: 48,
+              ),
+              Text(
+                '${_filteredProperties.length} resultados',
+                style: const TextStyle(
+                  fontSize: 12,
                   color: AppTheme.textSecondary,
                 ),
-                SizedBox(height: 12),
-                Text('No encontramos alojamientos con esos criterios.'),
-              ],
-            ),
-          )
-        else
-          ..._filteredProperties.map(_buildPropertyCard),
-      ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          if (_loadingProperties)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 35),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_propertiesError != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 25),
+              child: Column(
+                children: [
+                  const Text(
+                    'No se pudieron cargar los alojamientos.',
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _loadProperties,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            )
+          else if (_filteredProperties.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 35),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.search_off_rounded,
+                    size: 48,
+                    color: AppTheme.textSecondary,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No encontramos alojamientos con esos criterios.',
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._filteredProperties.map(_buildPropertyCard),
+        ],
       ),
     );
   }
@@ -330,174 +386,207 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPropertyCard(Property property) {
     final isFavorite = _favoriteIds.contains(property.id);
 
+    // NUEVO: Determinar si se cobra por noche o mes.
+    final priceUnit =
+        _propertyPriceUnits[property.id] == 'night'
+            ? 'noche'
+            : 'mes';
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 660),
         child: Card(
-      margin: const EdgeInsets.only(bottom: 22),
-      color: Colors.white,
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppTheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
+          margin: const EdgeInsets.only(bottom: 22),
+          color: Colors.white,
+          clipBehavior: Clip.antiAlias,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(
+              color: AppTheme.border,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Container(
-                width: double.infinity,
-                color: _getPropertyColor(property),
-                child: _propertyImageUrls.containsKey(property.id)
-                    ? Image.network(
-                        _propertyImageUrls[property.id]!,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          _getPropertyIcon(property),
-                          size: 76,
-                          color: AppTheme.primary,
-                        ),
-                      )
-                    : Icon(
-                        _getPropertyIcon(property),
-                        size: 76,
-                        color: AppTheme.primary,
-                      ),
-                ),
-              ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    property.type,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+              Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      width: double.infinity,
+                      color: _getPropertyColor(property),
+                      child: _propertyImageUrls
+                              .containsKey(property.id)
+                          ? Image.network(
+                              _propertyImageUrls[property.id]!,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.contain,
+                              errorBuilder: (
+                                context,
+                                error,
+                                stackTrace,
+                              ) {
+                                return Icon(
+                                  _getPropertyIcon(property),
+                                  size: 76,
+                                  color: AppTheme.primary,
+                                );
+                              },
+                            )
+                          : Icon(
+                              _getPropertyIcon(property),
+                              size: 76,
+                              color: AppTheme.primary,
+                            ),
                     ),
                   ),
-                ),
+
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        property.type,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton.filled(
+                      tooltip: isFavorite
+                          ? 'Quitar de favoritos'
+                          : 'Agregar a favoritos',
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: isFavorite
+                            ? Colors.red
+                            : AppTheme.textPrimary,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          if (isFavorite) {
+                            _favoriteIds.remove(property.id);
+                          } else {
+                            _favoriteIds.add(property.id);
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton.filled(
-                  tooltip: isFavorite
-                      ? 'Quitar de favoritos'
-                      : 'Agregar a favoritos',
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: isFavorite
-                        ? Colors.red
-                        : AppTheme.textPrimary,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      if (isFavorite) {
-                        _favoriteIds.remove(property.id);
-                      } else {
-                        _favoriteIds.add(property.id);
-                      }
-                    });
-                  },
-                  icon: Icon(
-                    isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                  ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      property.title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 7),
+
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 17,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            property.location,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 9),
+
+                    Text(
+                      property.description,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        // NUEVO: Mostrar /noche o /mes.
+                        Flexible(
+                          child: Text(
+                            '\$${property.price.toStringAsFixed(0)} COP / $priceUnit',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PropertyDetailScreen(
+                                  property: property,
+                                  imageUrl:
+                                      _propertyImageUrls[property.id],
+                                  houseRules:
+                                      _propertyHouseRules[property.id],
+                                  priceUnit: _propertyPriceUnits[property.id] ?? 'month',
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('Ver detalle'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  property.title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 17,
-                      color: AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        property.location,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 9),
-                Text(
-                  property.description,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\$${property.price.toString()} COP / mes',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PropertyDetailScreen(
-                              property: property,
-                              imageUrl: _propertyImageUrls[property.id],
-                              houseRules: _propertyHouseRules[property.id],
-                            ),
-                        ),
-                        );
-                      },
-                      child: const Text('Ver detalle'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
         ),
       ),
     );
@@ -524,16 +613,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 24),
+
         _buildComingSoonCard(
           Icons.volume_off_rounded,
           'Preferencias de ruido',
           'Encuentra personas que prefieran ambientes similares.',
         ),
+
         _buildComingSoonCard(
           Icons.cleaning_services_outlined,
           'Hábitos de limpieza',
           'Compara rutinas y organización de los espacios.',
         ),
+
         _buildComingSoonCard(
           Icons.people_alt_outlined,
           'Compatibilidad',
@@ -545,7 +637,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFavoritesPage() {
     final favorites = _properties
-        .where((property) => _favoriteIds.contains(property.id))
+        .where(
+          (property) => _favoriteIds.contains(property.id),
+        )
         .toList();
 
     return ListView(
@@ -558,7 +652,9 @@ class _HomeScreenState extends State<HomeScreen> {
             fontWeight: FontWeight.w800,
           ),
         ),
+
         const SizedBox(height: 16),
+
         if (favorites.isEmpty)
           const Text(
             'Todavía no tienes alojamientos guardados. '
@@ -587,7 +683,9 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppTheme.primary,
           ),
         ),
+
         const SizedBox(height: 16),
+
         const Text(
           'Mi perfil',
           textAlign: TextAlign.center,
@@ -597,37 +695,40 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-           if (SessionService.instance.isHost)
-             _buildComingSoonCard(
-               Icons.add_home_work_outlined,
-               'Publicar alojamiento',
-               'Crea una publicación con fotos, precio y descripción.',
-                onTap: () async {
-                 final created = await Navigator.push<bool>(
-                   context,
-                   MaterialPageRoute(
-                     builder: (context) =>
-                     const CreatePropertyScreen(),
+        if (SessionService.instance.isHost)
+          _buildComingSoonCard(
+            Icons.add_home_work_outlined,
+            'Publicar alojamiento',
+            'Crea una publicación con fotos, precio y descripción.',
+            onTap: () async {
+              final created = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const CreatePropertyScreen(),
+                ),
+              );
+
+              if (!mounted) return;
+
+              if (created == true) {
+                setState(() {
+                  _selectedIndex = 0;
+                });
+
+                _loadProperties();
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Alojamiento publicado con éxito.',
                     ),
-                  );
+                  ),
+                );
+              }
+            },
+          ),
 
-                   if (!mounted)  return;
-
-                   if (created == true) {
-                     setState(() {
-                       _selectedIndex = 0;
-                     });
-                     _loadProperties();
-                     ScaffoldMessenger.of(context).showSnackBar(
-                       const SnackBar(
-                         content: Text(
-                           'Alojamiento publicado con éxito.',
-                          ),
-                        ),
-        );
-                     }
-                 },
-               ),
         if (SessionService.instance.isHost)
           _buildComingSoonCard(
             Icons.inventory_2_outlined,
@@ -637,14 +738,19 @@ class _HomeScreenState extends State<HomeScreen> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const MyPropertiesScreen(),
+                  builder: (context) =>
+                      const MyPropertiesScreen(),
                 ),
               );
+
               if (!mounted) return;
+
               _loadProperties();
             },
           ),
+
         const SizedBox(height: 8),
+
         const Text(
           'Aquí podrás gestionar tus datos personales, '
           'tus alojamientos y tus preferencias de convivencia.',
@@ -654,7 +760,9 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 1.5,
           ),
         ),
+
         const SizedBox(height: 24),
+
         _buildComingSoonCard(
           Icons.person_outline_rounded,
           'Datos personales',
@@ -662,108 +770,110 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
 
         _buildComingSoonCard(
-  Icons.calendar_month_outlined,
-  'Mis reservas',
-  'Consulta tus solicitudes de hospedaje y su estado.',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const MyReservationsScreen(),
-      ),
-    );
-  },
-),
+          Icons.calendar_month_outlined,
+          'Mis reservas',
+          'Consulta tus solicitudes de hospedaje y su estado.',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const MyReservationsScreen(),
+              ),
+            );
+          },
+        ),
 
         _buildComingSoonCard(
           Icons.settings_outlined,
           'Preferencias',
           'Configura tus hábitos y estilo de convivencia.',
         ),
+
         _buildComingSoonCard(
-  Icons.assignment_outlined,
-  'Solicitudes recibidas',
-  'Gestiona las solicitudes de tus alojamientos.',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            const HostRequestsScreen(),
-      ),
-    );
-  },
-),
+          Icons.assignment_outlined,
+          'Solicitudes recibidas',
+          'Gestiona las solicitudes de tus alojamientos.',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const HostRequestsScreen(),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 
   Widget _buildComingSoonCard(
-  IconData icon,
-  String title,
-  String description, {
-  VoidCallback? onTap,
-}) {
-  return Card(
-    color: Colors.white,
-    elevation: 0,
-    margin: const EdgeInsets.only(bottom: 12),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-      side: const BorderSide(
-        color: AppTheme.border,
-      ),
-    ),
-    child: ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.all(14),
-      leading: CircleAvatar(
-        backgroundColor: AppTheme.primaryLight,
-        child: Icon(
-          icon,
-          color: AppTheme.primary,
+    IconData icon,
+    String title,
+    String description, {
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(
+          color: AppTheme.border,
         ),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.all(14),
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryLight,
+          child: Icon(
+            icon,
+            color: AppTheme.primary,
+          ),
         ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Text(description),
+        ),
+        trailing: onTap != null
+            ? const Icon(
+                Icons.chevron_right_rounded,
+              )
+            : null,
       ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 5),
-        child: Text(description),
-      ),
-      trailing: onTap != null
-          ? const Icon(
-              Icons.chevron_right_rounded,
-            )
-          : null,
-    ),
-  );
-}
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
 
   Color _getPropertyColor(Property property) {
-  if (property.type == 'Habitación') {
-    return const Color(0xFFF1E4D4);
+    if (property.type == 'Habitación') {
+      return const Color(0xFFF1E4D4);
+    }
+
+    return const Color(0xFFDDECE2);
   }
 
-  return const Color(0xFFDDECE2);
-}
+  IconData _getPropertyIcon(Property property) {
+    if (property.type == 'Habitación') {
+      return Icons.bedroom_parent_rounded;
+    }
 
-IconData _getPropertyIcon(Property property) {
-  if (property.type == 'Habitación') {
-    return Icons.bedroom_parent_rounded;
+    return Icons.apartment_rounded;
   }
-
-  return Icons.apartment_rounded;
- }
 }
