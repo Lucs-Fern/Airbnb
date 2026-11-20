@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../services/property_service.dart';
 
+import 'create_property_screen.dart';
+
 class MyPropertiesScreen extends StatefulWidget {
   const MyPropertiesScreen({super.key});
 
@@ -16,6 +18,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   late Future<List<Map<String, dynamic>>> _propertiesFuture;
 
   final Set<int> _deletingIds = {};
+  final Set<int> _editingIds = {};
 
   @override
   void initState() {
@@ -42,13 +45,75 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   }
 
   // ==========================================
+  // NUEVO: ABRIR FORMULARIO DE EDICIÓN
+  // ==========================================
+
+  Future<void> _editProperty(Map<String, dynamic> property) async {
+    final id = int.tryParse(property['id']?.toString() ?? '');
+
+    if (id == null ||
+        id <= 0 ||
+        _editingIds.contains(id) ||
+        _deletingIds.contains(id)) {
+      return;
+    }
+
+    setState(() {
+      _editingIds.add(id);
+    });
+
+    try {
+      // Abrir el formulario existente en modo edición.
+      // Los campos se cargarán con los datos actuales.
+      final updated = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => CreatePropertyScreen(property: property),
+        ),
+      );
+
+      if (!mounted) return;
+
+      // Si el usuario guardó los cambios,
+      // recargar las publicaciones desde PostgreSQL.
+      if (updated == true) {
+        await _refresh();
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Publicación actualizada correctamente.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _editingIds.remove(id);
+        });
+      }
+    }
+  }
+
+  // ==========================================
   // CONFIRMAR Y ELIMINAR PUBLICACIÓN
   // ==========================================
 
   Future<void> _confirmDelete(Map<String, dynamic> property) async {
-    final id = int.tryParse(property['id'].toString());
+    final id = int.tryParse(property['id']?.toString() ?? '');
 
-    if (id == null || _deletingIds.contains(id)) {
+    if (id == null ||
+        id <= 0 ||
+        _deletingIds.contains(id) ||
+        _editingIds.contains(id)) {
       return;
     }
 
@@ -184,7 +249,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   // ==========================================
 
   Widget _buildPropertyCard(Map<String, dynamic> property) {
-    final id = int.tryParse(property['id'].toString()) ?? -1;
+    final id = int.tryParse(property['id']?.toString() ?? '') ?? -1;
 
     final title = property['title']?.toString() ?? '';
 
@@ -200,7 +265,6 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
 
     final imageUrl = imagePath.isEmpty ? null : _service.getImageUrl(imagePath);
 
-    // El backend guarda la unidad de precio.
     final priceUnit = property['price_unit']?.toString() == 'night'
         ? 'noche'
         : 'mes';
@@ -208,6 +272,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final price = _formatPrice(property['price_monthly']);
 
     final isDeleting = _deletingIds.contains(id);
+    final isEditing = _editingIds.contains(id);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -390,39 +455,64 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 const SizedBox(height: 13),
 
                 // ====================================
-                // ELIMINAR PUBLICACIÓN
+                // NUEVO: BOTONES EDITAR Y ELIMINAR
                 // ====================================
                 Align(
                   alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: isDeleting
-                        ? null
-                        : () => _confirmDelete(property),
-                    icon: isDeleting
-                        ? const SizedBox(
-                            width: 17,
-                            height: 17,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(
-                            Icons.delete_outline_rounded,
-                            size: 19,
-                            color: AppTheme.error,
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    alignment: WrapAlignment.end,
+                    children: [
+                      // Abrir formulario de edición.
+                      FilledButton.icon(
+                        onPressed: id <= 0 || isDeleting || isEditing
+                            ? null
+                            : () => _editProperty(property),
+                        icon: const Icon(Icons.edit_outlined, size: 19),
+                        label: const Text('Editar'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
                           ),
-                    label: Text(
-                      isDeleting ? 'Eliminando...' : 'Eliminar',
-                      style: const TextStyle(
-                        color: AppTheme.error,
-                        fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      side: const BorderSide(color: AppTheme.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(13),
+
+                      // Conservar la eliminación existente.
+                      OutlinedButton.icon(
+                        onPressed: id <= 0 || isDeleting || isEditing
+                            ? null
+                            : () => _confirmDelete(property),
+                        icon: isDeleting
+                            ? const SizedBox(
+                                width: 17,
+                                height: 17,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 19,
+                                color: AppTheme.error,
+                              ),
+                        label: Text(
+                          isDeleting ? 'Eliminando...' : 'Eliminar',
+                          style: const TextStyle(
+                            color: AppTheme.error,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 44),
+                          side: const BorderSide(color: AppTheme.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -619,7 +709,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                               ),
                             )
                           else
-                            // Cuadrícula adaptable
+                            // Dos columnas en PC, una en celular.
                             LayoutBuilder(
                               builder: (context, constraints) {
                                 const spacing = 18.0;
