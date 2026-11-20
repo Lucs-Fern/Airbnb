@@ -3,35 +3,83 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const path = require('node:path');
 
 const pool = require('./src/config/database');
 
-const authRoutes = require('./src/routes/auth_routes');
+// ==========================================
+// IMPORTAR RUTAS DE ROOMLY
+// ==========================================
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-
-const path = require('node:path');
+const authRoutes = require(
+  './src/routes/auth_routes'
+);
 
 const propertyRoutes = require(
   './src/routes/property_routes'
 );
 
-// Configuración
-app.use(cors());
-app.use(express.json());
-app.use('/api/auth', authRoutes);
-// Permitir visualizar fotografías
-app.use(
-  '/uploads',
-  express.static(path.join(__dirname, 'uploads'))
+// NUEVO: rutas de favoritos permanentes.
+// Crearemos este archivo en el siguiente paso.
+const favoriteRoutes = require(
+  './src/routes/favorite_routes'
 );
 
-// Rutas de publicaciones
+// ==========================================
+// CONFIGURAR SERVIDOR
+// ==========================================
+
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+// Permitir solicitudes desde Flutter Web y móvil.
+app.use(cors());
+
+// Interpretar solicitudes JSON.
+app.use(express.json());
+
+// ==========================================
+// AUTENTICACIÓN
+// ==========================================
+
+app.use('/api/auth', authRoutes);
+
+// ==========================================
+// FOTOGRAFÍAS DE ALOJAMIENTOS
+// ==========================================
+
+app.use(
+  '/uploads',
+  express.static(
+    path.join(__dirname, 'uploads')
+  )
+);
+
+// ==========================================
+// PUBLICACIONES
+// ==========================================
+
 app.use('/api/properties', propertyRoutes);
 
-// Comprobar que el servidor funciona
+// ==========================================
+// NUEVO: FAVORITOS PERMANENTES
+// ==========================================
+
+// Permitirá:
+// GET    /api/favorites
+// POST   /api/favorites/:propertyId
+// DELETE /api/favorites/:propertyId
+//
+// Las operaciones se protegerán con JWT
+// dentro del archivo favorite_routes.js.
+
+app.use('/api/favorites', favoriteRoutes);
+
+// ==========================================
+// ESTADO DEL SERVIDOR
+// ==========================================
+
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -39,8 +87,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Comprobar la conexión con PostgreSQL
-// Ruta temporal para desarrollo
+// ==========================================
+// VERIFICAR POSTGRESQL
+// ==========================================
+
+// Ruta de diagnóstico utilizada en desarrollo.
 app.get('/api/db-test', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -49,23 +100,31 @@ app.get('/api/db-test', async (req, res) => {
         (SELECT COUNT(*)::int FROM roles) AS roles_count
     `);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Conexión con PostgreSQL exitosa',
       data: result.rows[0]
     });
 
   } catch (error) {
-    console.error('Error de PostgreSQL:', error.message);
+    console.error(
+      'Error de PostgreSQL:',
+      error.message
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'No fue posible conectar con PostgreSQL'
     });
   }
 });
 
-// Iniciar servidor
+// ==========================================
+// INICIAR ROOMLY
+// ==========================================
+
 app.listen(PORT, () => {
-  console.log(`Roomly ejecutándose en http://localhost:${PORT}`);
+  console.log(
+    `Roomly ejecutándose en http://localhost:${PORT}`
+  );
 });
